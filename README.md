@@ -1,4 +1,4 @@
-# babylon-scraper
+# nhs-search 
 
 FIXME: description
 
@@ -10,7 +10,7 @@ Download from http://example.com/FIXME.
 
 FIXME: explanation
 
-    $ java -jar babylon-scraper-0.1.0-standalone.jar [args]
+    $ java -jar nhs-scraper-0.1.0-standalone.jar [args]
 
 ## Options
 
