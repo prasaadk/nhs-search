@@ -1,6 +1,6 @@
-(ns babylon-scraper.core-test
+(ns nhs_search.core-test
   (:require [clojure.test :refer :all]
-            [babylon-scraper.core :refer :all]))
+            [nhs_search.core :refer :all]))
 
 (deftest a-test
   (testing "FIXME, I fail."
