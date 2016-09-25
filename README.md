@@ -1,32 +1,6 @@
 # nhs-search 
 
-FIXME: description
-
-## Installation
-
-Download from http://example.com/FIXME.
-
-## Usage
-
-FIXME: explanation
-
-    $ java -jar nhs-scraper-0.1.0-standalone.jar [args]
-
-## Options
-
-FIXME: listing of options this app accepts.
-
-## Examples
-
-...
-
-### Bugs
-
-...
-
-### Any Other Sections
-### That You Think
-### Might be Useful
+This is a demo project to try out scraping capabilities of enlive. Project uses enlive library to scrape off Condition pages from NHS website. It uses clucie to index the condition pages for search.
 
 ## License
 
