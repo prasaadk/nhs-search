@@ -70,10 +70,10 @@
 (defn scrape-content []
   (flatten
    (map (fn [x] (scrape-condition-pages x))
-        (take 1 (generate-seed-urls)))))
+        (generate-seed-urls))))
 
 ;; this method writes the content to a file
 (defn scrape [filename]
   (with-open [wrtr (io/writer filename)]
     (count (map (fn [x] (.write wrtr (str (json/write-str x) "\n")))
-                (take 10 (scrape-content))))))
+                (scrape-content)))))
