@@ -1,4 +1,4 @@
-(ns babylon_scraper.scrape
+(ns nhs_search.scrape
   (:require [net.cgrand.enlive-html :as html]
             [clojure.data.json :as json]
             [clojure.java.io :as io]
@@ -38,6 +38,7 @@
 (defn- extract-main-content [content]
   (html/select content [:div.main-content html/text-node]))
 
+;; Extract page title
 (defn- extract-title [content]
   (first (html/select content [:div.healthaz-header :h1 html/text-node])))
 
