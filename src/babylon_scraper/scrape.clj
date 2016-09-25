@@ -7,46 +7,73 @@
 (def domain-url "http://www.nhs.uk/")
 (def base-url "http://www.nhs.uk/Conditions/Pages/BodyMap.aspx?Index=")
 
-(defn- fetch-url [url]
-  (html/html-resource (java.net.URL. url)))
+;; This method fetches HTML for the given [url]
+(defn- get-html-content [url]
+  (html/html-resource (java.net.URI. (clojure.string/replace (clojure.string/trim url) #"\s" "%20"))))
+
+;; This method extracts condition page links for the given index page url
+(defn- extract-condition-page-links [index-page-url]
+  (html/select (get-html-content index-page-url) [:div.index-section :> :ul :li :a]))
 
 ;; Generates a character range e.g for A - Z, use (char-range \A \Z))
 (defn- char-range [start end]
   (map #(str (char %)) (range (int start) (inc (int end)))))
 
-;; This method generates URLs for all the conditions
-(defn- generate-index-urls []
+;; This method generates URLs covering all the Index characters
+;; http://www.nhs.uk/Conditions/Pages/BodyMap.aspx?Index=[A-Z|0-9] 
+(defn- generate-seed-urls []
   (map #(str base-url %) (concat (char-range \A \Z) (char-range \0 \9))))
 
+;; This checks if the retrieved URL is relative or not.
 (defn- page-url [url]
   (if (str/starts-with? url "/")
     (str domain-url url)
     url))
 
-;; This method is supposed to fetch content for given condition page URL
+;; This method fetches content for given condition page URL
 (defn- page-content [url]
-  (apply str (html/select (fetch-url (page-url url)) [:div.main-content html/text-node])))
+  (get-html-content (page-url url)))
 
-;; This method fetch html content and return json-like objects
-(defn- fetch-json-content [url]
-  (map (fn [x] {:title (first (:content x))
-               :url (:href (:attrs x))
-               :content (page-content (:href (:attrs x)))} )
-       (html/select (fetch-url url) [:div.index-section :> :ul :li :a])))
+;; Extract main-content
+(defn- extract-main-content [content]
+  (html/select content [:div.main-content html/text-node]))
 
-(defn generate-condition-urls []
+(defn- extract-title [content]
+  (first (html/select content [:div.healthaz-header :h1 html/text-node])))
+
+;; Find sub-page-urls
+(defn- find-sub-page-urls [content]
+  (html/select content [:ul.sub-nav :li :span :a]))
+
+;; Extract and scrape sub-page-urls main-content
+(defn- extract-sub-page-content [content]
+  (map (fn [x]
+         (let [sub-content (page-content (:href (:attrs x)))]
+           {:title (extract-title sub-content)
+            :url (page-url (:href (:attrs x)))
+            :content (extract-main-content sub-content)}))
+       (find-sub-page-urls content)))
+
+;; This method attempts to scrape the sub pages
+(defn- scrape-condition-pages [url]
+  (map (fn [x]
+         (let [content (page-content (:href (:attrs x)))]
+           (conj (flatten (extract-sub-page-content content)) ;; extract sub-pages
+                 {:title (first (:content x))
+                  :url (page-url (:href (:attrs x)))
+                  :content (extract-main-content content)} ;; element for main-page
+                 )
+           ))
+       (extract-condition-page-links url)))
+
+;; 
+(defn scrape-content []
   (flatten
-   (map (fn [x] (fetch-json-content x))
-        (generate-index-urls))))
+   (map (fn [x] (scrape-condition-pages x))
+        (take 1 (generate-seed-urls)))))
 
 ;; this method writes the content to a file
 (defn scrape [filename]
   (with-open [wrtr (io/writer filename)]
     (count (map (fn [x] (.write wrtr (str (json/write-str x) "\n")))
-                (generate-condition-urls)))))
-
-;; scratchpad / work area ahead
-
-(comment (char-range \0 \9))
-
-(comment (map (fn [x] [(first (:content x)) (:href (:attrs x))]) (html/select (fetch-url "http://www.nhs.uk/Conditions/Pages/BodyMap.aspx?Index=A") [:div.index-section :> :ul :li :a])))
+                (take 10 (scrape-content))))))
